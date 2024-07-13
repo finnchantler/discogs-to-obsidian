@@ -9,6 +9,7 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "archiver": "^7.0.1",
     "disconnect": "^1.2.2",
     "express": "^4.19.2"
   },

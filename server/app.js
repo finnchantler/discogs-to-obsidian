@@ -4,6 +4,7 @@ const bodyParser = require('body-parser');
 const fs = require('fs');
 const path = require('path');
 const Release = require('./releaseModel');
+const archiver = require('archiver');
 
 const app = express();
 const port = 3000;
@@ -57,6 +58,8 @@ app.post('/go', async (req, res) => {
         const labels = release.basic_information.labels.map(label => label.name);
         const styles = release.basic_information.styles;
 
+        // Create 
+
         const r = new Release(artists, title, labels, styles);
         releasesArray.push(r);
       }
@@ -65,9 +68,72 @@ app.post('/go', async (req, res) => {
 
     } while (currentPage <= totalPages);
 
-    console.log(releasesArray); // This should now log the populated releasesArray
+    // Generate Obsidian vault structure
+    const vaultPath = path.join(__dirname, 'obsidian-vault');
+    if (!fs.existsSync(vaultPath)) {
+      fs.mkdirSync(vaultPath);
+    }
 
-    res.status(200).json({ releases: releasesArray });
+    for (const release of releasesArray) {
+      const releaseDir = path.join(vaultPath, release.title);
+      if (!fs.existsSync(releaseDir)) {
+        fs.mkdirSync(releaseDir);
+      }
+
+      const markdownContent = `
+---
+title: "${release.title}"
+artists: [${release.artists.map(artist => `"${artist}"`).join(', ')}]
+labels: [${release.labels.map(label => `"${label}"`).join(', ')}]
+styles: [${release.styles.map(style => `"${style}"`).join(', ')}]
+---
+
+# ${release.title}
+## Artists
+${release.artists.join(', ')}
+## Labels
+${release.labels.join(', ')}
+## Styles
+${release.styles.join(', ')}
+    `;
+
+      fs.writeFileSync(path.join(releaseDir, `${release.title}.md`), markdownContent.trim());
+    }
+
+    // Create the Home.md file with Dataview query
+    const homeContent = `
+
+
+## Releases
+\`\`\`dataview
+table title, artists, labels, styles
+from ""
+where file.name != "Home.md"
+\`\`\`
+    `;
+
+    fs.writeFileSync(path.join(vaultPath, 'Home.md'), homeContent.trim());
+
+    // Create a zip file of the vault
+    const zipPath = path.join(__dirname, 'obsidian-vault.zip');
+    const output = fs.createWriteStream(zipPath);
+    const archive = archiver('zip', {
+      zlib: { level: 9 } // Sets the compression level.
+    });
+
+    output.on('close', () => {
+      console.log(`${archive.pointer()} total bytes`);
+      console.log('Archiver has been finalized and the output file descriptor has closed.');
+      res.download(zipPath);
+    });
+
+    archive.on('error', (err) => {
+      throw err;
+    });
+
+    archive.pipe(output);
+    archive.directory(vaultPath, false);
+    archive.finalize();
 
   } catch (error) {
     console.error('Error fetching releases:', error);
