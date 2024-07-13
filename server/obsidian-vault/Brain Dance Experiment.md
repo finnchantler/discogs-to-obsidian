@@ -5,10 +5,10 @@ labels: ["Arcadia Sounds"]
 styles: ["Acid", "Tech House", "House", "Downtempo"]
 ---
 
-# Brain Dance Experiment
-## Artists
-Nathan Pinder
-## Labels
+## Nathan Pinder - Brain Dance Experiment
+
+
+### Labels
 Arcadia Sounds
-## Styles
+### Styles
 Acid, Tech House, House, Downtempo

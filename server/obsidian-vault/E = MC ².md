@@ -5,10 +5,10 @@ labels: ["GFB Records"]
 styles: ["Techno", "Italo House"]
 ---
 
-# E = MC ²
-## Artists
-David X
-## Labels
+## David X - E = MC ²
+
+
+### Labels
 GFB Records
-## Styles
+### Styles
 Techno, Italo House

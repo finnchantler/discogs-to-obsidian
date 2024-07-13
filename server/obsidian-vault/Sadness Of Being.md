@@ -5,10 +5,10 @@ labels: ["Über (3)"]
 styles: ["Downtempo"]
 ---
 
-# Sadness Of Being
-## Artists
-The Wawawiwas
-## Labels
+## The Wawawiwas - Sadness Of Being
+
+
+### Labels
 Über (3)
-## Styles
+### Styles
 Downtempo

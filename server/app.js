@@ -28,8 +28,7 @@ app.get('/', (req, res) => {
       </body>
     </html>
   `);
-  
-})
+});
 
 app.post('/go', async (req, res) => {
   const username = req.body.username;
@@ -58,8 +57,7 @@ app.post('/go', async (req, res) => {
         const labels = release.basic_information.labels.map(label => label.name);
         const styles = release.basic_information.styles;
 
-        // Create 
-
+        // Create a Release object
         const r = new Release(artists, title, labels, styles);
         releasesArray.push(r);
       }
@@ -70,39 +68,43 @@ app.post('/go', async (req, res) => {
 
     // Generate Obsidian vault structure
     const vaultPath = path.join(__dirname, 'obsidian-vault');
-    if (!fs.existsSync(vaultPath)) {
-      fs.mkdirSync(vaultPath);
+
+    // Clean up the vault directory if it exists
+    if (fs.existsSync(vaultPath)) {
+      fs.rmdirSync(vaultPath, { recursive: true });
     }
+    
+    fs.mkdirSync(vaultPath);
 
     for (const release of releasesArray) {
-      const releaseDir = path.join(vaultPath, release.title);
-      if (!fs.existsSync(releaseDir)) {
-        fs.mkdirSync(releaseDir);
-      }
+      const fileName = `${release.title.replace(/[\/\\?%*:|"<>\.]/g, '-')}.md`; // Clean up title for filename
+      const filePath = path.join(vaultPath, fileName);
 
       const markdownContent = `
 ---
 title: "${release.title}"
-artists: [${release.artists.map(artist => `"${artist}"`).join(', ')}]
-labels: [${release.labels.map(label => `"${label}"`).join(', ')}]
-styles: [${release.styles.map(style => `"${style}"`).join(', ')}]
+artists: ["${release.artists.join('", "')}"]
+labels: ["${release.labels.join('", "')}"]
+styles: ["${release.styles.join('", "')}"]
 ---
 
-# ${release.title}
-## Artists
-${release.artists.join(', ')}
-## Labels
-${release.labels.join(', ')}
-## Styles
-${release.styles.join(', ')}
-    `;
+## ${release.artists.join(', ') + ' - ' +  release.title}
 
-      fs.writeFileSync(path.join(releaseDir, `${release.title}.md`), markdownContent.trim());
+
+### Labels
+${release.labels.join(', ')}
+### Styles
+${release.styles.join(', ')}
+      `;
+
+      console.log(`Writing file: ${filePath}`);
+      console.log(markdownContent);
+
+      fs.writeFileSync(filePath, markdownContent.trim());
     }
 
     // Create the Home.md file with Dataview query
     const homeContent = `
-
 
 ## Releases
 \`\`\`dataview
@@ -111,6 +113,9 @@ from ""
 where file.name != "Home.md"
 \`\`\`
     `;
+
+    console.log(`Writing Home.md file: ${path.join(vaultPath, 'Home.md')}`);
+    console.log(homeContent);
 
     fs.writeFileSync(path.join(vaultPath, 'Home.md'), homeContent.trim());
 
@@ -122,8 +127,6 @@ where file.name != "Home.md"
     });
 
     output.on('close', () => {
-      console.log(`${archive.pointer()} total bytes`);
-      console.log('Archiver has been finalized and the output file descriptor has closed.');
       res.download(zipPath);
     });
 
@@ -141,7 +144,6 @@ where file.name != "Home.md"
   }
 });
 
-
 app.listen(port, () => {
-  console.log(`Example app listening on port ${port}`)
-})
+  console.log(`Example app listening on port ${port}`);
+});
